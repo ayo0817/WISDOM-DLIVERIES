@@ -1,8 +1,11 @@
+import { db } from '../firebase';
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { motion } from 'motion/react';
 import { CreditCard, Truck, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { addDoc, addDoc } from '@firebase/firestore';
+import { collection } from '@firebase/firestore';
 
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
@@ -16,14 +19,25 @@ export default function CheckoutPage() {
     paymentMethod: 'card'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate order processing
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    await addDoc(collection(db, 'orders'), {
+      customer: formData,
+      items: cart,
+      subtotal: totalPrice,
+      deliveryFee: 1000,
+      total: totalPrice + 1000,
+      status: 'pending',
+      createdAt: new Date()
+    });
     setIsOrdered(true);
-    setTimeout(() => {
-      clearCart();
-    }, 2000);
-  };
+    setTimeout(() => clearCart(), 2000);
+  } catch (error) {
+    alert('Failed to place order. Please try again.');
+    console.error(error);
+  }
+};
 
   if (isOrdered) {
     return (
